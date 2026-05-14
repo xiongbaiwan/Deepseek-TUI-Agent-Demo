@@ -16,6 +16,13 @@ public class Message {
     private List<ToolCall> tool_calls;
     private String tool_call_id;
 
+    public static Message system(String content) {
+        Message m = new Message();
+        m.role = "system";
+        m.content = content;
+        return m;
+    }
+
     public static Message user(String content) {
         Message m = new Message();
         m.role = "user";
@@ -34,7 +41,9 @@ public class Message {
         Message m = new Message();
         m.role = "assistant";
         m.content = content;
-        m.tool_calls = toolCalls;
+        if (toolCalls != null && !toolCalls.isEmpty()) {
+            m.tool_calls = toolCalls;
+        }
         return m;
     }
 

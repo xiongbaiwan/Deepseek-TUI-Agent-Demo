@@ -16,7 +16,10 @@ public class ToolCall {
 
     public ToolCall(String id, String name, String arguments) {
         this.id = id;
-        this.function = new FunctionCall(name, arguments);
+        this.type = "function";
+        if (name != null) {
+            this.function = new FunctionCall(name, arguments != null ? arguments : "");
+        }
     }
 
     public String getId() { return id; }
@@ -26,6 +29,7 @@ public class ToolCall {
     public void setFunction(FunctionCall function) { this.function = function; }
 
     /** 工具函数的具体调用 */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class FunctionCall {
         private String name;
         private String arguments;
@@ -33,12 +37,12 @@ public class ToolCall {
         public FunctionCall() {}
         public FunctionCall(String name, String arguments) {
             this.name = name;
-            this.arguments = arguments;
+            this.arguments = arguments != null ? arguments : "";
         }
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public String getArguments() { return arguments; }
-        public void setArguments(String arguments) { this.arguments = arguments; }
+        public void setArguments(String arguments) { this.arguments = arguments != null ? arguments : ""; }
     }
 }

@@ -1,7 +1,7 @@
 package com.example.tui.tools;
 
 import com.example.tui.model.ChatRequest.ToolDefinition;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.nio.file.*;
 import java.util.*;
@@ -40,8 +40,7 @@ public class ListDirTool implements Tool {
     @Override
     public String execute(String argumentsJson) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(argumentsJson);
+            JsonNode node = SharedMapper.INSTANCE.readTree(argumentsJson);
             String dirPath = node.has("path") ? node.get("path").asText() : ".";
             boolean recursive = node.has("recursive") && node.get("recursive").asBoolean();
 

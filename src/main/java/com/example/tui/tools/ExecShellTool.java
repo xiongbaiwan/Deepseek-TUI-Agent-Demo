@@ -1,7 +1,7 @@
 package com.example.tui.tools;
 
 import com.example.tui.model.ChatRequest.ToolDefinition;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.io.*;
 import java.util.*;
@@ -34,8 +34,7 @@ public class ExecShellTool implements Tool {
     @Override
     public String execute(String argumentsJson) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(argumentsJson);
+            JsonNode node = SharedMapper.INSTANCE.readTree(argumentsJson);
             String command = node.get("command").asText();
 
             // 根据操作系统选择 Shell
@@ -60,7 +59,13 @@ public class ExecShellTool implements Tool {
             }
 
             boolean finished = process.waitFor(30, TimeUnit.SECONDS);
-            int exitCode = finished ? process.exitValue() : -1;
+            int exitCode;
+            if (!finished) {
+                process.destroyForcibly();
+                exitCode = -1;
+                return "命令执行超时（30s），已强制终止进程\n" + output.toString();
+            }
+            exitCode = process.exitValue();
 
             return "退出码: " + exitCode + "\n" + output.toString();
         } catch (Exception e) {
