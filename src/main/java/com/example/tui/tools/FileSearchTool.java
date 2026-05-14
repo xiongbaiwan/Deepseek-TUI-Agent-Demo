@@ -1,7 +1,7 @@
 package com.example.tui.tools;
 
 import com.example.tui.model.ChatRequest.ToolDefinition;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import java.nio.file.*;
 import java.util.*;
@@ -35,8 +35,7 @@ public class FileSearchTool implements Tool {
     @Override
     public String execute(String argumentsJson) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(argumentsJson);
+            JsonNode node = SharedMapper.INSTANCE.readTree(argumentsJson);
             String pattern = node.get("pattern").asText().toLowerCase();
             String searchPath = node.has("path") ? node.get("path").asText() : ".";
 

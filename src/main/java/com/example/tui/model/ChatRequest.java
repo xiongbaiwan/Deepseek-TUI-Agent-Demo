@@ -13,6 +13,9 @@ public class ChatRequest {
     private List<Message> messages;
     private List<ToolDefinition> tools;
     private boolean stream;
+    private double temperature = 0;
+    private int maxTokens = 8192;
+    private StreamOptions streamOptions;
 
     public ChatRequest() {}
 
@@ -21,6 +24,7 @@ public class ChatRequest {
         this.messages = messages;
         this.tools = tools;
         this.stream = true;
+        this.streamOptions = new StreamOptions();
     }
 
     public String getModel() { return model; }
@@ -31,6 +35,21 @@ public class ChatRequest {
     public void setTools(List<ToolDefinition> tools) { this.tools = tools; }
     public boolean isStream() { return stream; }
     public void setStream(boolean stream) { this.stream = stream; }
+    public double getTemperature() { return temperature; }
+    public void setTemperature(double temperature) { this.temperature = temperature; }
+    public int getMaxTokens() { return maxTokens; }
+    public void setMaxTokens(int maxTokens) { this.maxTokens = maxTokens; }
+    @JsonProperty("stream_options")
+    public StreamOptions getStreamOptions() { return streamOptions; }
+    public void setStreamOptions(StreamOptions streamOptions) { this.streamOptions = streamOptions; }
+
+    /** 流式选项，用于获取 token 用量统计 */
+    public static class StreamOptions {
+        @JsonProperty("include_usage")
+        private boolean includeUsage = true;
+        public boolean isIncludeUsage() { return includeUsage; }
+        public void setIncludeUsage(boolean includeUsage) { this.includeUsage = includeUsage; }
+    }
 
     /** 工具定义，注册到 LLM 时使用的格式 */
     public static class ToolDefinition {

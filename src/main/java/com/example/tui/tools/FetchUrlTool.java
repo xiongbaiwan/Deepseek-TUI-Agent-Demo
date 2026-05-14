@@ -1,8 +1,9 @@
 package com.example.tui.tools;
 
 import com.example.tui.model.ChatRequest.ToolDefinition;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.JsonNode;
 
+import java.net.*;
 import java.util.*;
 
 import okhttp3.*;
@@ -41,10 +42,26 @@ public class FetchUrlTool implements Tool {
     @Override
     public String execute(String argumentsJson) {
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode node = mapper.readTree(argumentsJson);
+            JsonNode node = SharedMapper.INSTANCE.readTree(argumentsJson);
             String url = node.get("url").asText();
             boolean stripHtml = !node.has("strip_html") || node.get("strip_html").asBoolean();
+
+            // 仅允许 http/https，拒绝 file://、本地回环、内网地址
+            URI uri;
+            try {
+                uri = new URI(url);
+            } catch (URISyntaxException e) {
+                return "URL 格式无效: " + e.getMessage();
+            }
+            String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase() : "";
+            if (!"http".equals(scheme) && !"https".equals(scheme)) {
+                return "仅支持 http/https 协议，拒绝: " + url;
+            }
+            String host = uri.getHost();
+            if (host == null || host.equals("localhost") || host.equals("127.0.0.1")
+                    || host.equals("0.0.0.0") || host.equals("[::1]")) {
+                return "拒绝访问本地地址: " + url;
+            }
 
             Request request = new Request.Builder().url(url).build();
 

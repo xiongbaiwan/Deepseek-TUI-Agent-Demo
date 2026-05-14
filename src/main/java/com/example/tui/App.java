@@ -5,6 +5,8 @@ import com.example.tui.engine.AgentEngine;
 import com.example.tui.tools.*;
 import com.example.tui.ui.TerminalUI;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -76,9 +78,10 @@ public class App {
         ui.printBanner();
 
         // 2. 注册工具（对应 Rust 项目中的工具注册表）
+        Path workspaceRoot = Paths.get(System.getProperty("user.dir"));
         List<Tool> tools = Arrays.asList(
-                new ReadFileTool(),
-                new WriteFileTool(),
+                new ReadFileTool(workspaceRoot),
+                new WriteFileTool(workspaceRoot),
                 new EditFileTool(),
                 new ListDirTool(),
                 new GrepFilesTool(),
@@ -89,7 +92,17 @@ public class App {
 
         // 3. 创建客户端和引擎
         DeepSeekClient client = new DeepSeekClient(apiKey, baseUrl);
-        AgentEngine engine = new AgentEngine(client, tools, ui::printStatus);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try { client.close(); } catch (Exception ignored) {}
+        }));
+        String systemPrompt = "你是一个专业的 AI 编程助手，运行在终端 TUI 环境中。你的工作目录是: "
+                + workspaceRoot.toAbsolutePath()
+                + "\n\n规则：\n"
+                + "1. 优先使用工具而不是 shell 命令\n"
+                + "2. 读写文件时注意路径，不要超出工作区范围\n"
+                + "3. 代码修改要精确，不要做无关的改动\n"
+                + "4. 回答要简洁，代码要有注释";
+        AgentEngine engine = new AgentEngine(client, tools, ui::printStatus, systemPrompt);
 
         // 4. 主 REPL 循环
         ui.printWelcome("已就绪！随时提问。我可以读写文件、编辑代码、搜索内容、获取网页和执行命令。");
@@ -116,6 +129,11 @@ public class App {
                     case "/clear":
                         engine.reset();
                         ui.printStatus("对话历史已清除。");
+                        break;
+                    case "/cancel":
+                    case "/stop":
+                    case "/c":
+                        engine.cancelCurrentTurn();
                         break;
                     default:
                         ui.printError("未知命令: " + trimmed);
@@ -153,6 +171,7 @@ public class App {
         ui.println("  /help     - 显示此帮助");
         ui.println("  /quit     - 退出程序");
         ui.println("  /clear    - 清除对话历史");
+        ui.println("  /cancel   - 取消当前 AI 请求");
         ui.println("");
         ui.println("已加载的工具：");
         ui.println("  read_file   - 读取文件内容");
