@@ -1,0 +1,24 @@
+# DeepSeek TUI 配置文件
+# 放置位置: ~/.tui/config.toml（全局） 或 .tui/config.toml（项目级）
+
+# API 配置
+api_key = "sk-xxx"
+base_url = "https://api.deepseek.com"
+model = "deepseek-chat"
+
+# 审批模式: plan（只读）| agent（需审批）| yolo（自动批准）
+approval_mode = "agent"
+
+# 系统提示（可选，默认内置）
+# system_prompt = "你是一个..."
+
+# 工作区根目录（可选，默认为当前目录）
+# workspace_root = "/path/to/project"
+
+[ui]
+# 是否显示推理/思考内容
+show_reasoning = true
+
+[context]
+# 最大上下文 token 数
+max_tokens = 128000

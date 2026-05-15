@@ -74,12 +74,13 @@ public class DeepSeekClient implements AutoCloseable {
      */
     public Cancellable streamChat(ChatRequest request,
                                   Consumer<String> onTextDelta,
+                                  Consumer<String> onReasoningDelta,
                                   Consumer<ToolCall> onToolCallDelta,
                                   Runnable onDone,
                                   Consumer<String> onUsage,
                                   Consumer<String> onError) {
         String requestId = UUID.randomUUID().toString();
-        SseStream stream = new SseStream(requestId, request, onTextDelta, onToolCallDelta, onDone, onUsage, onError);
+        SseStream stream = new SseStream(requestId, request, onTextDelta, onReasoningDelta, onToolCallDelta, onDone, onUsage, onError);
         stream.start();
         return stream;
     }
@@ -96,6 +97,7 @@ public class DeepSeekClient implements AutoCloseable {
         nonStreamRequest.setMaxTokens(request.getMaxTokens());
 
         String body = SharedMapper.INSTANCE.writeValueAsString(nonStreamRequest);
+
         Request httpRequest = new Request.Builder()
                 .url(chatUrl)
                 .post(RequestBody.create(body, JSON))
@@ -120,7 +122,8 @@ public class DeepSeekClient implements AutoCloseable {
                     if (!response.isSuccessful()) {
                         try (ResponseBody rb = response.body()) {
                             String errBody = rb != null ? rb.string() : "";
-                            throw new IOException("API 错误 " + response.code() + ": " + errBody);
+                            errorHolder[0] = new IOException("API 错误 " + response.code() + ": " + errBody);
+                            return;
                         }
                     }
                     try (ResponseBody rb = response.body()) {
@@ -177,6 +180,7 @@ public class DeepSeekClient implements AutoCloseable {
         private final String requestId;
         private final ChatRequest request;
         private final Consumer<String> onTextDelta;
+        private final Consumer<String> onReasoningDelta;
         private final Consumer<ToolCall> onToolCallDelta;
         private final Runnable onDone;
         private final Consumer<String> onUsage;
@@ -186,11 +190,13 @@ public class DeepSeekClient implements AutoCloseable {
         private volatile boolean cancelled = false;
 
         SseStream(String requestId, ChatRequest request,
-                  Consumer<String> onTextDelta, Consumer<ToolCall> onToolCallDelta,
+                  Consumer<String> onTextDelta, Consumer<String> onReasoningDelta,
+                  Consumer<ToolCall> onToolCallDelta,
                   Runnable onDone, Consumer<String> onUsage, Consumer<String> onError) {
             this.requestId = requestId;
             this.request = request;
             this.onTextDelta = onTextDelta;
+            this.onReasoningDelta = onReasoningDelta;
             this.onToolCallDelta = onToolCallDelta;
             this.onDone = onDone;
             this.onUsage = onUsage;
@@ -327,6 +333,15 @@ public class DeepSeekClient implements AutoCloseable {
                         var contentNode = delta.get("content");
                         if (contentNode != null && contentNode.isTextual() && onTextDelta != null) {
                             onTextDelta.accept(contentNode.asText());
+                        }
+
+                        // 推理/思考内容增量（DeepSeek 模型特有）
+                        var reasoningNode = delta.get("reasoning_content");
+                        if (reasoningNode == null || reasoningNode.isNull()) {
+                            reasoningNode = delta.get("reasoning");
+                        }
+                        if (reasoningNode != null && reasoningNode.isTextual() && onReasoningDelta != null) {
+                            onReasoningDelta.accept(reasoningNode.asText());
                         }
 
                         // 工具调用增量

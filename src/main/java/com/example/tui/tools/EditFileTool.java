@@ -8,6 +8,16 @@ import java.util.*;
 
 public class EditFileTool implements Tool {
 
+    private final java.nio.file.Path workspaceRoot;
+
+    public EditFileTool() {
+        this(java.nio.file.Paths.get(System.getProperty("user.dir")));
+    }
+
+    public EditFileTool(java.nio.file.Path workspaceRoot) {
+        this.workspaceRoot = workspaceRoot;
+    }
+
     @Override
     public ToolDefinition definition() {
         Map<String, Object> params = new LinkedHashMap<>();
@@ -43,7 +53,7 @@ public class EditFileTool implements Tool {
             String oldString = node.get("old_string").asText();
             String newString = node.get("new_string").asText();
 
-            Path p = Path.of(path);
+            Path p = WorkspaceGuard.resolveWithin(workspaceRoot, path);
             String content = Files.readString(p);
 
             int firstIdx = content.indexOf(oldString);

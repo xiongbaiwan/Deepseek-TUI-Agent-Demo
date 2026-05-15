@@ -12,6 +12,7 @@ public class Message {
 
     private String role;
     private String content;
+    private String reasoningContent;
 
     private List<ToolCall> tool_calls;
     private String tool_call_id;
@@ -66,4 +67,8 @@ public class Message {
     @JsonProperty("tool_call_id")
     public String getToolCallId() { return tool_call_id; }
     public void setToolCallId(String toolCallId) { this.tool_call_id = toolCallId; }
+
+    @JsonProperty("reasoning_content")
+    public String getReasoningContent() { return reasoningContent; }
+    public void setReasoningContent(String reasoningContent) { this.reasoningContent = reasoningContent; }
 }

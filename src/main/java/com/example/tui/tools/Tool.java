@@ -13,4 +13,9 @@ public interface Tool {
 
     /** 执行工具，参数为 JSON 字符串，返回执行结果 */
     String execute(String argumentsJson);
+
+    /** 是否可以安全地并行执行（只读工具返回 true） */
+    default boolean isParallelSafe() {
+        return false;
+    }
 }

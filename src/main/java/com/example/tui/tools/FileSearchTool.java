@@ -33,6 +33,9 @@ public class FileSearchTool implements Tool {
     }
 
     @Override
+    public boolean isParallelSafe() { return true; }
+
+    @Override
     public String execute(String argumentsJson) {
         try {
             JsonNode node = SharedMapper.INSTANCE.readTree(argumentsJson);
